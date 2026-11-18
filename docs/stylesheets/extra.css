@@ -1,0 +1,11 @@
+/* OpenMusca brand colours (navy + teal), used by the Material "custom" palette */
+:root {
+  --md-primary-fg-color: #0e1a2b;
+  --md-primary-fg-color--light: #1d2e45;
+  --md-primary-fg-color--dark: #08111d;
+  --md-accent-fg-color: #2bb3a3;
+}
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #0e1a2b;
+  --md-accent-fg-color: #2bb3a3;
+}

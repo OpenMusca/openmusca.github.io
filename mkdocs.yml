@@ -3,13 +3,15 @@ site_description: Open-source local firmware for the PETKIT P592 pet feeder (exp
 site_url: https://openmusca.github.io/
 repo_url: https://github.com/OpenMusca/musca
 repo_name: OpenMusca/musca (source release coming soon)
-copyright: Unofficial community project, not affiliated with or endorsed by PETKIT. Text and site content under the MIT licence (see the Licence page).
+copyright: Unofficial community project, not affiliated with or endorsed by PETKIT. Text and site content under the MIT licence (see the Licence page). Logo based on "Fly" by Delapouite (game-icons.net), CC BY 3.0, modified.
 use_directory_urls: true
 strict: true
 
 theme:
   name: material
   font: false            # no external fonts, system font stack only
+  logo: assets/logo.svg
+  favicon: assets/favicon.svg
   language: en
   features:
     - navigation.sections
@@ -19,18 +21,21 @@ theme:
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
+
+extra_css:
+  - stylesheets/extra.css
 
 extra:
   generator: false       # no "Made with Material" footer link

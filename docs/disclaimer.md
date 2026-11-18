@@ -6,6 +6,9 @@ OpenMusca is an independent, unofficial community project. It is **not affiliate
 endorsed by PETKIT** or any of its partners. "PETKIT" and "YumShare" are trademarks of their respective owners and are
 used here only to name the hardware this project is compatible with.
 
+The OpenMusca logo is based on "Fly" by Delapouite ([game-icons.net](https://game-icons.net/1x1/delapouite/fly.html)),
+licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), modified (colours, background tile).
+
 ## Use at your own risk
 
 OpenMusca is experimental software for a device that feeds animals. Installing it is **entirely at your own risk**:
