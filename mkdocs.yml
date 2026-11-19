@@ -62,6 +62,7 @@ nav:
       - Install guide (M1): install.md
       - Home Assistant: home-assistant.md
       - Configuration: configuration.md
+      - Radio (experimental): radio.md
       - Safety and recovery: safety-recovery.md
       - Development: development.md
       - Legal: legal.md

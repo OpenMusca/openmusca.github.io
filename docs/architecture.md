@@ -30,16 +30,28 @@ Linux, without a UART.
 
 Built from the public Axera SDK U-Boot 2020.04 plus our patches (`tools/build/patches/uboot/`, GPL-2.0-or-later):
 XINCUN SPI-NAND support, A/B selection, a fixed FIT unpack, no environment writes during boot, checked flash reads.
-It currently boots a copy of the stock kernel from `mtd8`.
+The "clean" build links none of the SDK files that carry a no-redistribution header. It boots our own kernel from `mtd8`
+on the development device. A mainline-based U-Boot port is in preparation (`tools/build/patches/uboot-mainline/`).
 
 ### Kernel variants (experimental)
 
+Each step towards upstream Linux is its own variant on top of the previous one, built twice with identical SHA-256,
+checked offline against the previous variant (config, symbols, device tree, register tables), independently reviewed,
+and only then tested in slot B with slot A as the fallback.
+
 | Variant | State |
 |---|---|
-| stock 4.19.125 (slot A) | works; the vendor modules load |
-| our 4.19.125 build with the XINCUN patch | builds; boots from slot B with the stock-copy path; vendor `ax_*` modules need kernel-config parity first |
+| stock 4.19.125 (slot A) | works; untouched fallback |
+| our 4.19.125 build: upstream `8250_dw` UARTs, clean-room DWC3 USB glue, XINCUN SPI-NAND, own audio codec driver, no vendor `ax_*` modules | works; runs in slot B on the development device |
+| + pads from the device tree via upstream `pinctrl-single` (vendor pad table and pinctrl drivers removed) | device-tested once (all pad registers equal to the previous kernel) |
+| + upstream `i2c-designware` with clock gates in our clock driver | built and reviewed, not yet on a device; the RTC driver is left out until its effect on time-keeping is decided |
+| + own upstream-style watchdog driver | built and reviewed, not yet on a device |
+| all three combined | built; review pending |
+| Linux 6.12 LTS with our device tree and drivers | compile-tested; NAND bring-up on the device step by step |
 | 4.19.x CIP (longer-term-support patches) | builds, not yet booted on a device |
-| feeder-only kernel without the camera/NPU drivers | design; reduces closed-source dependencies |
+
+Drivers written for these steps are kept in upstream style; drafts for mainline submission (platform, watchdog, audio,
+GC2083 sensor, clock/reset controller) are prepared but not sent.
 
 The vendor Wi-Fi module is refused on any kernel other than the stock one (different `sk_buff` layout, it would corrupt
 packets). Our own `8733bu` module, built from the Realtek GPL source, is shipped per kernel release and verified by

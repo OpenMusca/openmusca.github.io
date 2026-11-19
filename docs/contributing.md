@@ -10,7 +10,7 @@ tools/ci/run-all.sh --no-docker  # only the suites that need no Docker (Docker s
 
 The script prints a table (suite, result, seconds) and exits non-zero if any suite fails. Single suites:
 `agent/scripts/build.sh test|clippy`, `m1/test/run-tests.sh`, `tools/audit/test/run-tests.sh`,
-`tools/fw/test/run-tests.sh`, `tools/ci/test/run-tests.sh`. Tests never touch the device or the network of the
+`tools/ci/test/run-tests.sh`, `tools/release/test/run-tests.sh` (provenance/verify selftest; release tooling: `tools/release/README.md`). Tests never touch the device or the network of the
 device. Docker images are pinned by tag and sha256 digest; do not replace a digest by a bare tag.
 
 ## Hygiene rules
@@ -40,4 +40,4 @@ Do not commit build outputs or anything from the list above.
 Vendor (PETKIT, Axera, Realtek) source, headers and binaries are not copied into this repository. Behaviour is
 documented from observation and rewritten from scratch; where a vendor file is needed it is pulled from the
 owner's own device at install time. Whoever reads vendor code does not write the replacement for it. Details,
-file by file: [research/vendor-rewrite.md](https://github.com/OpenMusca/musca/blob/main/research/vendor-rewrite.md); licenses: [LICENSING.md](licensing.md).
+rules and process: [docs/development.md](development.md#clean-room-rules); licenses: [LICENSING.md](licensing.md).

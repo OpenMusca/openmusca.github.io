@@ -61,9 +61,10 @@ These are enforced in `muscad` (`agent/crates/musca-p592/src/device.rs`), indepe
 | Limit | Value |
 |---|---|
 | portions per hopper per request | 1 to 4 (0 for the other hopper), at least one portion in total |
-| minimum time between manual feeds | 60 s |
+| minimum time between manual feeds | 60 s (all time windows run on the monotonic clock, a clock step changes nothing) |
 | manual feeds per rolling hour | 10 |
 | portions per rolling hour | `max_portions_per_hour` (default 20) |
+| portions per day (remote feeds only, MCU meals not counted) | `feed.max_portions_per_day` (default 10, 1 to 50), refused as `daily_limit`; local midnight when the clock is synced, else rolling 24 h; the count is stored on flash and survives restarts and reboots (`feed_counter_file`), shown in Home Assistant as "Remote feeds today" |
 | concurrent requests | one; a second one is refused as `busy` |
 | duplicate request ids | ignored |
 | link down | refused as `no_link` |
