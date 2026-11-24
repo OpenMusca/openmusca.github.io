@@ -55,15 +55,24 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - News: news.md
   - Documentation:
       - Overview: overview.md
+      - Quickstart: quickstart.md
+      - Compatibility: compatibility.md
+      - FAQ: faq.md
       - Hardware: hardware.md
       - Architecture: architecture.md
       - Install guide (M1): install.md
+      - Uninstall: uninstall.md
       - Home Assistant: home-assistant.md
+      - Apple Home, Google, Alexa: smart-home-bridges.md
       - Configuration: configuration.md
+      - Web UI: web-ui.md
       - Radio (experimental): radio.md
       - Safety and recovery: safety-recovery.md
+      - Troubleshooting: troubleshooting.md
+      - Privacy: privacy.md
       - Development: development.md
       - Legal: legal.md
   - Project:

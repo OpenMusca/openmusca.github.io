@@ -4,7 +4,7 @@ Musca talks to Home Assistant (HA) over MQTT with device-based MQTT discovery (n
 custom integration to install: you need an MQTT broker (for example Mosquitto) on your local network, the HA MQTT
 integration pointed at it, and the broker settings in `muscad`'s [configuration](configuration.md).
 
-This page is derived from `agent/crates/musca-p592/src/components.rs`, `agent/crates/musca-p592/src/decode.rs`, `agent/crates/musca-p592/src/device.rs`, `agent/crates/musca-p592/src/diag.rs` and
+This page is derived from `agent/crates/musca-p592/src/components.rs`, `agent/crates/musca-p592/src/decode.rs`, `agent/crates/musca-p592/src/device.rs`, `agent/crates/musca-p592/src/diag.rs`, `agent/crates/musca-p592/src/power.rs` and
 `agent/crates/musca-core/src/mqtt.rs`. `<id>` is the device id (`device_id` in the config, or derived from the Wi-Fi
 MAC as `p592_<hex>`).
 
@@ -30,6 +30,10 @@ MAC as `p592_<hex>`).
 | `musca/<id>/state/sound` | device to broker | yes | JSON `{"select", "volume", "last"}` (only with `sound.enabled`); `last` is `none`, `playing`, `idle`, `busy`, `rate_limited`, `muted` or `error` |
 | `musca/<id>/state/mic` | device to broker | no | JSON `{"dbfs", "peak_dbfs"[, "spl_est"]}` (only with `mic.enabled`) |
 | `musca/<id>/event/button_1`, `button_2` | device to broker | no | JSON `{"event_type": "press" \| "long_press" \| "release"}` |
+| `musca/<id>/event/button_3` | device to broker | no | same as above, plus `{"event_type": "raw", "raw": "01"}` for a payload byte whose meaning is not known (see below) |
+| `musca/<id>/state/power` | device to broker | yes | JSON `{"battery_mode", "dc_mv", "battery_mv", "battery_reading_valid", "battery_raw", "power_on_source", "tentative"}`; unknown values are `null` (only with `mcu.diag`, see [MCU power](#mcu-power-diagnostic-tentative)) |
+| `musca/<id>/event/mcu_power` | device to broker | no | JSON `{"event_type": "power_on", "source": N}` or `{"event_type": "prepare_sleep"}`; at most one per second per type (only with `mcu.diag`) |
+| `musca/<id>/event/button_chord` | device to broker | no | JSON `{"event_type": "net_hopper_1" \| "net_hopper_2" \| "unknown", "raw": "12"}`: button 3 pressed together with a hopper button (only with `mcu.diag`) |
 | `musca/<id>/event/feed` | device to broker | no | JSON `{"event_type": "fed" \| "jammed" \| "skipped" \| "refused", "h1", "h2", "manual", "reason"}` |
 | `musca/<id>/cmd/...` | broker to device | never | commands, see below |
 
@@ -42,7 +46,8 @@ command topics again on reconnect, so feeding works again without restarting it.
 
 | Entity | Platform | Needs | Notes |
 |---|---|---|---|
-| Button 1, Button 2 | event | always | the two buttons on the device |
+| Button 1, Button 2 | event | always | the two hopper buttons (a long press of about 2 s makes the MCU feed on its own) |
+| Button 3 | event | always | the third button, next to the LED. Musca only reports it; no button press via Musca dispenses food. What a long press of button 3 does on the MCU side is not verified |
 | Hopper 1 motor, Hopper 2 motor | binary sensor (running) | always | tentative decoding of the MCU motor message |
 | Hopper 1 food low, Hopper 2 food low | binary sensor (problem) | always | tentative: `ON` = the MCU reports "food lack" for that hopper; unknown until the first MCU status message; attributes `raw` (the two raw bytes) and `tentative`. See below |
 | MCU link | binary sensor (connectivity, diagnostic) | always | `OFF` means no valid frames from the feeder MCU |
@@ -85,6 +90,30 @@ signal, TX rate (off), RX rate (off) and frequency (off), Wi-Fi download and upl
 `/proc/net/wireless` as fallback). While `wlan0` is not registered yet at boot, the sensors stay unknown and the lookup
 is retried every sample (a log line `wifi stats unavailable` right after start is normal and clears by itself).
 
+#### MCU power (diagnostic, tentative)
+
+Also with `mcu.diag = true`, read only, all values tentative. They come from MCU frames Musca already receives; Musca
+sends nothing to the MCU for them (in particular it never sends the MCU "set sleep" frame, CMD 14, and does not react to
+the MCU's sleep notice in any way).
+
+| Entity | Platform | Source |
+|---|---|---|
+| On batteries | binary sensor (diagnostic) | MCU status flag; `ON` only for the value `1`, `OFF` for `0`, unknown for anything else or before the first frame (an unknown value is never shown as mains) |
+| DC input voltage | sensor, mV (diagnostic) | the same value `state/telemetry_02` calls `supply_mv` (about 6000 mV on mains) |
+| Battery voltage | sensor, mV (diagnostic) | only shown when the reading is inside 4000..8000 mV (an assumed range, no battery has been measured yet); otherwise unknown. The raw reading is the only attribute, `battery_raw` (restricted by `json_attr_tpl`) (a unit without batteries shows only 3, 6, 9, 12, which is not a voltage). "No valid reading" is not proof that no battery is fitted |
+| Power-on source | sensor (diagnostic) | the number the MCU reports at power-on (opaque; `2` is a wake for a scheduled feeding); unknown until the MCU reports one |
+| MCU power event | event | `power_on` (attribute `source`) and `prepare_sleep` (the MCU announces that it is about to cut the SoC supply; Musca takes no action) |
+| Button chord | event | button 3 together with a hopper button: `net_hopper_2` (payload `11`), `net_hopper_1` (`12`), `unknown` (any other single byte). Nothing starts on a chord |
+
+`state/power` is published on a change of the battery mode, on a change of 20 mV or more of DC input or battery voltage,
+and otherwise at most every 60 s. A log warning is written once when "on batteries" and the battery reading disagree.
+The four sensors carry `expire_after` 300 s (five refresh periods): while the MCU is silent `state/power` is not
+republished, so HA shows them as unavailable instead of keeping the last values. `event/button_chord` is limited to one
+event per second per chord kind, like `event/mcu_power`.
+There is no low-battery entity: its threshold is not verified.
+
+**Battery operation under Musca is untested; batteries may drain faster; no update, flash or OTA on battery.**
+
 The existing "MCU link" and "Last feed result (raw)" diagnostics are unchanged. The topic names of everything above
 this section are unchanged, and availability still comes from `musca/<id>/availability`.
 
@@ -126,8 +155,19 @@ Streaming internet radio, RTP or Snapcast to the feeder speaker is under develop
 package. The device is not expected to fetch streams itself: a helper on your network (for example a Snapcast server)
 would deliver them, and the speaker volume above would be shared. Treat it as experimental and do not rely on it.
 
-Not announced yet (planned): food level estimate, battery and mains state, next meal, firmware `update`
+For Apple Home, Google Home and Alexa through HA see [Smart home bridges](smart-home-bridges.md).
+
+Not announced yet (planned): food level estimate, next meal, firmware `update`
 entity, camera. The MCU keeps its own meal schedule; Musca does not change it.
+
+Button 3 (decoded 20.11.2026 from one device test): a press sends payload `04`, which Musca reports as `press`, followed
+by `01`, which is reported as `raw` with `"raw": "01"`. The meaning of `01` (possibly its release) is not verified, so
+it is not mapped to `release`. Any other single payload byte of button 3 is reported the same way.
+Under the stock firmware a long hold of button 3 starts pairing mode (fast-blinking LED). Musca does not start pairing; what
+the MCU itself does on a long hold is not verified. Until it is: tap button 3 only, do not hold it for more than 3 s, and never
+press it together with a hopper button (that combination enters a factory test mode under the stock firmware). Musca
+publishes such a chord as the "Button chord" event (see above) and does nothing else. In the button 3 entity `01` is
+probably "short press completed" and `02` a gesture not identified yet; both stay `raw`.
 
 ## Commands
 
@@ -145,7 +185,7 @@ entity, camera. The MCU keeps its own meal schedule; Musca does not change it.
 
 The feed commands do nothing unless `feed.enabled = true`; a refused request is reported on `event/feed` and
 `state/feed_request` with a reason (`disabled`, `bad_amount`, `no_link`, `busy`, `interval`, `daily_limit`,
-`hourly_limit`, `portion_cap`, `send_error`, or `no_mcu_answer`). The limits behind these are listed in
+`rolling_limit`, `hourly_limit`, `portion_cap`, `send_error`, or `no_mcu_answer`). The limits behind these are listed in
 [safety and recovery](safety-recovery.md#feed-safety-limits).
 
 ## Enabling and disabling features
@@ -162,7 +202,7 @@ Do not change features around meal times; the MCU keeps feeding on its own sched
 
 ## Examples
 
-Replace `p592_abc123` with your device id in the entity ids; check the real ids under Settings, Devices.
+Replace `p592_abcdef` with your device id in the entity ids; check the real ids under Settings, Devices.
 
 Call before the feeding time (a ring tone 2 minutes ahead):
 
@@ -175,7 +215,7 @@ automation:
     action:
       - action: button.press
         target:
-          entity_id: button.p592_abc123_play_call_sound
+          entity_id: button.p592_abcdef_play_call_sound
 ```
 
 Notify when food is low (either hopper; with a shared storage both change together):
@@ -186,8 +226,8 @@ automation:
     trigger:
       - platform: state
         entity_id:
-          - binary_sensor.p592_abc123_hopper_1_food_low
-          - binary_sensor.p592_abc123_hopper_2_food_low
+          - binary_sensor.p592_abcdef_hopper_1_food_low
+          - binary_sensor.p592_abcdef_hopper_2_food_low
         to: "on"
         for: "00:10:00"
     action:
@@ -211,7 +251,7 @@ automation:
     action:
       - action: number.set_value
         target:
-          entity_id: number.p592_abc123_speaker_volume
+          entity_id: number.p592_abcdef_speaker_volume
         data:
           value: "{{ vol }}"
 ```
@@ -222,12 +262,12 @@ Dashboard card:
 type: entities
 title: Feeder
 entities:
-  - entity: binary_sensor.p592_abc123_hopper_1_food_low
-  - entity: binary_sensor.p592_abc123_hopper_2_food_low
-  - entity: select.p592_abc123_call_sound
-  - entity: number.p592_abc123_speaker_volume
-  - entity: button.p592_abc123_play_call_sound
-  - entity: sensor.p592_abc123_sound_level
+  - entity: binary_sensor.p592_abcdef_hopper_1_food_low
+  - entity: binary_sensor.p592_abcdef_hopper_2_food_low
+  - entity: select.p592_abcdef_call_sound
+  - entity: number.p592_abcdef_speaker_volume
+  - entity: button.p592_abcdef_play_call_sound
+  - entity: sensor.p592_abcdef_sound_level
 ```
 
 ## Securing MQTT

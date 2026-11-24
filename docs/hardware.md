@@ -22,7 +22,7 @@ behaviour was learned by observation.
 | Feeder MCU | a separate Telink TLSR82xx-class MCU runs motors, hopper sensors, the meal schedule, RTC, buttons and BLE. It keeps its schedule while Linux is down | community, behaviour confirmed |
 | MCU link | UART3 (`/dev/ttyS3`), frames `5A A5`, little-endian length, command, sequence, flags, payload, CRC-16/CCITT-FALSE (poly 0x1021, init 0xFFFF, little-endian). Several payload layouts are still tentative | confirmed (CRC-valid frames captured and decoded) |
 | Wi-Fi | Realtek RTL8733BU dual-band over USB; driver `8733bu` (Realtek GPL source). The vendor module is only ABI-compatible with the stock kernel | confirmed |
-| Camera | 2 MP GalaxyCore sensor on MIPI, Axera ISP and H.264 encoder (closed vendor blocks) | community; not used by Musca yet (planned) |
+| Camera | 2 MP GalaxyCore sensor on MIPI, Axera ISP and H.264 encoder (closed vendor blocks) | community; not used by Musca yet. Own driver bring-up in progress: register-level tests on the device (capture configuration can be programmed from the CPU, 2026-11-23), no image yet |
 | Network services (stock) | telnet with a well-known root password, vendor cloud client over MQTT/HTTP | confirmed |
 
 ## Boot flash layout (slot model)

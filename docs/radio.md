@@ -94,20 +94,14 @@ Start with the default -20 dB and set the loudness with the Music Assistant slid
 
 ## 3. Safety
 
-- **Feeding windows.** `musca-sink` refuses to start, and stops by itself, in a window from a few minutes before to
-  ten minutes after each scheduled meal (local time, DST handled; the windows are fixed in `tools/audio/musca-sink.c`,
-  adjust them to your own meal times). A
-  refused start makes `muscad` wait 60 s before the next try, so radio resumes after the window while the switch is
-  still ON.
 - **No-sound file.** While `/opt/musca/state/no-sound` exists (path: `audio_rx.nosound_file`) the sink refuses and stops.
   Silence the device at once with `touch /opt/musca/state/no-sound`; `rm` it to allow sound again.
 - **Time limit.** One sink run ends after `max_seconds` (default 600, maximum 3600); while the switch is ON the receiver
   restarts about 5 s later, so the limit bounds a run, not a day. Switch OFF when you are done.
 - **LAN only.** `host` must be private/loopback/link-local IPv4; `bind` must be the feeder's own concrete address. The
   feeder opens one outgoing connection (snapcast) or one UDP socket (rtp) and nothing else.
-- **No speaker without the sink.** All paths use `musca-sink`, so volume cap, windows and no-sound file always apply.
-  A `muscad` crash takes the receiver with it. Do not run it around meal times when testing: the MCU keeps feeding on
-  its own schedule either way.
+- **No speaker without the sink.** All paths use `musca-sink`, so volume cap and no-sound file always apply.
+  A `muscad` crash takes the receiver with it. The MCU keeps feeding on its own schedule either way.
 
 ## 4. Troubleshooting
 
@@ -138,5 +132,5 @@ Common failures:
   a portproxy), and use the Windows LAN IP as `host`. A lost server is retried every 5 s without a restart loop.
 - **rtp: nothing plays**: `bind` is not the feeder's IP, port mismatch, or a sender format other than 48 kHz stereo L16
   (or Opus with `codec = "opus"`). Check with `tcpdump -n udp port <port>` on the sender host.
-- **Stops by itself**: a feeding window, the no-sound file, or `max_seconds`; see section 3.
+- **Stops by itself**: the no-sound file or `max_seconds`; see section 3.
 - **Gaps on Wi-Fi**: raise the snapserver `buffer` to 1500-2000 ms, prefer Opus (64 to 128 kbit/s) over PCM (1.5 Mbit/s).

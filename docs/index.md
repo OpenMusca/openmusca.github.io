@@ -39,7 +39,7 @@ is the public documentation of the project.
 | help | [Contributing](contributing.md), [Development](development.md) |
 | report a security issue | [Security policy](security.md) |
 
-All pages are in the navigation. The [Overview](overview.md) explains the status labels (works, experimental,
+Recent changes are listed in [News](news.md). All pages are in the navigation. The [Overview](overview.md) explains the status labels (works, experimental,
 planned).
 
 ## Licence and disclaimer

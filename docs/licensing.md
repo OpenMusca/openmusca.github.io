@@ -17,3 +17,7 @@ owner's own device at install time.
 
 Licence checks: `tools/audit/sbom.sh` (SBOM and the check that blocks non-allowed licences), `tools/audit/br2-sbom.py`,
 `tools/audit/vendor-scan.sh`; background in [docs/legal.md](legal.md). Third-party texts shipped in the m1 package: `tools/audit/license-texts/`.
+
+## Matter prototype build tools (20.11.2026)
+
+The Matter prototype crate (`agent/crates/musca-matter`) uses three MPL-2.0 crates (`brownstone`, `indent_write`, `nom-supreme`) as build-time tooling only (via the `rs-matter-codegen` build-dependency). They are allowed by per-crate exceptions in that crate's own `deny.toml`; the workspace policy stays permissive-only, and a gate in `matter-proto.sh deny` fails if any of them reaches the shipped binary. See `research/license-audit.md` and `research/matter-prototype.md`.

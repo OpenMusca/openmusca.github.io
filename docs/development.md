@@ -24,7 +24,8 @@ Everything builds in Docker with images pinned by tag and sha256 digest; do not 
 ```
 agent/scripts/build.sh test        # cargo test for the workspace
 agent/scripts/build.sh clippy      # lints
-agent/scripts/build.sh release     # static armv7 musl muscad + supervisor, reproducible
+MUSCA_ALLOW_FLOOR0=1 agent/scripts/build.sh release   # static armv7 musl muscad + supervisor, reproducible; dev build (OTA
+                                                      # anti-rollback floor 0); a real release sets MUSCA_BUNDLE_COUNTER=<n>
 m1/build.sh                        # M1 package (needs the release binaries)
 tools/build/build.sh all           # U-Boot + kernel images (long; experimental, see tools/build/README.md)
 ```
